@@ -620,6 +620,8 @@ void OBSBasic::ChangeProfile()
 	auth.reset();
 	DestroyPanelCookieManager();
 
+	CheckRestartNeeded(config, basicConfig);
+
 	config.Swap(basicConfig);
 	InitBasicConfigDefaults();
 	InitBasicConfigDefaults2();
@@ -637,6 +639,16 @@ void OBSBasic::ChangeProfile()
 
 	if (api)
 		api->on_event(OBS_FRONTEND_EVENT_PROFILE_CHANGED);
+
+	if (restart) {
+		QMessageBox::StandardButton button = OBSMessageBox::question(
+			this, QTStr("Restart"), QTStr("NeedsRestart"));
+
+		if (button == QMessageBox::Yes)
+			close();
+		else
+			restart = false;
+	}
 }
 
 void OBSBasic::CheckForSimpleModeX264Fallback()
@@ -693,4 +705,22 @@ void OBSBasic::CheckForSimpleModeX264Fallback()
 				  curRecEncoder);
 	if (changed)
 		config_save_safe(basicConfig, "tmp", nullptr);
+}
+
+void OBSBasic::CheckRestartNeeded(ConfigFile &newConfig, ConfigFile &curConfig)
+{
+	const char *curChannelSetup =
+		config_get_string(curConfig, "Audio", "ChannelSetup");
+	const char *curSampleRate =
+		config_get_string(curConfig, "Audio", "SampleRate");
+
+	const char *newChannelSetup =
+		config_get_string(newConfig, "Audio", "ChannelSetup");
+	const char *newSampleRate =
+		config_get_string(newConfig, "Audio", "SampleRate");
+
+	if ((newChannelSetup &&
+	     strcmp(curChannelSetup, newChannelSetup) != 0) ||
+	    (newSampleRate && strcmp(curSampleRate, newSampleRate) != 0))
+		restart = true;
 }

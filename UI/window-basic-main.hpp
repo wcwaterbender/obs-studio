@@ -377,6 +377,7 @@ private:
 	void RefreshProfiles();
 	void ChangeProfile();
 	void CheckForSimpleModeX264Fallback();
+	void CheckRestartNeeded(ConfigFile &newConfig, ConfigFile &curConfig);
 
 	void SaveProjectNow();
 
